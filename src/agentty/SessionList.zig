@@ -39,7 +39,10 @@ pub fn add(self: *SessionList, session: *Session) !void {
 
 /// Remove a session from the list by ID
 pub fn remove(self: *SessionList, id: u64) ?*Session {
-    return self.sessions.fetchSwapRemove(id).?.value;
+    if (self.sessions.fetchSwapRemove(id)) |entry| {
+        return entry.value;
+    }
+    return null;
 }
 
 /// Get a session by ID

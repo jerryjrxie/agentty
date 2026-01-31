@@ -114,7 +114,12 @@ pub fn init(self: *Worktree) !void {
     defer self.alloc.free(result.stdout);
     defer self.alloc.free(result.stderr);
 
-    if (result.term.Exited != 0) {
+    const exit_code = switch (result.term) {
+        .Exited => |code| code,
+        else => 255,
+    };
+
+    if (exit_code != 0) {
         // Check if branch already exists, try without -b
         const result2 = try runGitCommand(self.alloc, self.base_repo, &.{
             "worktree",
@@ -125,7 +130,12 @@ pub fn init(self: *Worktree) !void {
         defer self.alloc.free(result2.stdout);
         defer self.alloc.free(result2.stderr);
 
-        if (result2.term.Exited != 0) {
+        const exit_code2 = switch (result2.term) {
+            .Exited => |code| code,
+            else => 255,
+        };
+
+        if (exit_code2 != 0) {
             return error.WorktreeCreationFailed;
         }
     }
@@ -167,7 +177,12 @@ pub fn getDiff(self: *const Worktree, alloc: Allocator) ![]const u8 {
     });
     defer alloc.free(result.stderr);
 
-    if (result.term.Exited != 0) {
+    const exit_code = switch (result.term) {
+        .Exited => |code| code,
+        else => 255,
+    };
+
+    if (exit_code != 0) {
         alloc.free(result.stdout);
         return try alloc.dupe(u8, "");
     }
@@ -187,7 +202,12 @@ pub fn getChangedFiles(self: *const Worktree, alloc: Allocator) ![][]const u8 {
     defer alloc.free(result.stdout);
     defer alloc.free(result.stderr);
 
-    if (result.term.Exited != 0) {
+    const exit_code = switch (result.term) {
+        .Exited => |code| code,
+        else => 255,
+    };
+
+    if (exit_code != 0) {
         return try alloc.alloc([]const u8, 0);
     }
 
@@ -218,7 +238,12 @@ pub fn getCurrentCommit(self: *const Worktree, alloc: Allocator) ![]const u8 {
     });
     defer alloc.free(result.stderr);
 
-    if (result.term.Exited != 0) {
+    const exit_code = switch (result.term) {
+        .Exited => |code| code,
+        else => 255,
+    };
+
+    if (exit_code != 0) {
         alloc.free(result.stdout);
         return try alloc.dupe(u8, "");
     }
@@ -264,5 +289,5 @@ test "Worktree creation" {
 
     try std.testing.expect(!worktree.created);
     try std.testing.expectEqual(@as(u64, 12345), worktree.session_id);
-    try std.testing.expectStringStartsWith(worktree.branch, "agentty/");
+    try std.testing.expect(std.mem.startsWith(u8, worktree.branch, "agentty/"));
 }

@@ -213,6 +213,9 @@ pub fn getSummary(self: *const Session, buf: []u8) ![]const u8 {
     });
 }
 
+/// Error type for session operations
+pub const Error = Allocator.Error;
+
 test "Session creation" {
     const alloc = std.testing.allocator;
 

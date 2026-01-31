@@ -174,6 +174,12 @@ pub fn cleanupOrphaned(self: *WorktreeManager, active_session_ids: []const u64) 
     return cleaned;
 }
 
+/// Error type for worktree manager operations
+pub const Error = error{
+    WorktreeAlreadyExists,
+    RepositoryNotFound,
+} || Allocator.Error || Worktree.Error || std.fs.File.OpenError;
+
 test "WorktreeManager basic operations" {
     // This test requires mocking git operations, so we just test initialization
     const alloc = std.testing.allocator;

@@ -171,7 +171,10 @@ pub fn validate(command: []const u8) bool {
     std.heap.page_allocator.free(result.stdout);
     std.heap.page_allocator.free(result.stderr);
 
-    return result.term == .Exited and result.term.Exited == 0;
+    return switch (result.term) {
+        .Exited => |code| code == 0,
+        else => false,
+    };
 }
 
 test "Hooks configuration" {

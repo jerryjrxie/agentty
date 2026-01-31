@@ -146,32 +146,22 @@ pub fn detectRepository(alloc: Allocator, dir: []const u8) !?[]const u8 {
 
 /// Clean up all orphaned worktrees (worktrees without active sessions)
 pub fn cleanupOrphaned(self: *WorktreeManager, active_session_ids: []const u64) !usize {
-    var cleaned: usize = 0;
-
     var to_remove = std.ArrayList(u64).init(self.alloc);
     defer to_remove.deinit();
 
     var iter = self.worktrees.iterator();
     while (iter.next()) |entry| {
         const session_id = entry.key_ptr.*;
-        var found = false;
-        for (active_session_ids) |active_id| {
-            if (active_id == session_id) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+        if (std.mem.indexOfScalar(u64, active_session_ids, session_id) == null) {
             try to_remove.append(session_id);
         }
     }
 
     for (to_remove.items) |session_id| {
         try self.removeWorktree(session_id);
-        cleaned += 1;
     }
 
-    return cleaned;
+    return to_remove.items.len;
 }
 
 /// Error type for worktree manager operations

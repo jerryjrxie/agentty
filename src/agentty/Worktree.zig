@@ -114,10 +114,7 @@ pub fn init(self: *Worktree) !void {
     defer self.alloc.free(result.stdout);
     defer self.alloc.free(result.stderr);
 
-    const exit_code = switch (result.term) {
-        .Exited => |code| code,
-        else => 255,
-    };
+    const exit_code = getExitCode(result);
 
     if (exit_code != 0) {
         // Check if branch already exists, try without -b
@@ -130,12 +127,7 @@ pub fn init(self: *Worktree) !void {
         defer self.alloc.free(result2.stdout);
         defer self.alloc.free(result2.stderr);
 
-        const exit_code2 = switch (result2.term) {
-            .Exited => |code| code,
-            else => 255,
-        };
-
-        if (exit_code2 != 0) {
+        if (getExitCode(result2) != 0) {
             return error.WorktreeCreationFailed;
         }
     }
@@ -177,10 +169,7 @@ pub fn getDiff(self: *const Worktree, alloc: Allocator) ![]const u8 {
     });
     defer alloc.free(result.stderr);
 
-    const exit_code = switch (result.term) {
-        .Exited => |code| code,
-        else => 255,
-    };
+    const exit_code = getExitCode(result);
 
     if (exit_code != 0) {
         alloc.free(result.stdout);
@@ -202,10 +191,7 @@ pub fn getChangedFiles(self: *const Worktree, alloc: Allocator) ![][]const u8 {
     defer alloc.free(result.stdout);
     defer alloc.free(result.stderr);
 
-    const exit_code = switch (result.term) {
-        .Exited => |code| code,
-        else => 255,
-    };
+    const exit_code = getExitCode(result);
 
     if (exit_code != 0) {
         return try alloc.alloc([]const u8, 0);
@@ -238,10 +224,7 @@ pub fn getCurrentCommit(self: *const Worktree, alloc: Allocator) ![]const u8 {
     });
     defer alloc.free(result.stderr);
 
-    const exit_code = switch (result.term) {
-        .Exited => |code| code,
-        else => 255,
-    };
+    const exit_code = getExitCode(result);
 
     if (exit_code != 0) {
         alloc.free(result.stdout);
@@ -268,6 +251,14 @@ fn runGitCommand(alloc: Allocator, cwd: []const u8, args: []const []const u8) !s
         .argv = argv.items,
         .cwd = cwd,
     });
+}
+
+/// Extract exit code from process result
+fn getExitCode(result: std.process.Child.RunResult) u8 {
+    return switch (result.term) {
+        .Exited => |code| code,
+        else => 255,
+    };
 }
 
 /// Error type for worktree operations

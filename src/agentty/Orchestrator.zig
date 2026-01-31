@@ -212,16 +212,7 @@ fn finishSpawn(self: *Orchestrator, session: *Session) !*Session {
     try self.monitor.watch(session);
 
     // Run pre-session hook
-    if (self.hooks.runPreSession(session)) |result_opt| {
-        if (result_opt) |*result| {
-            defer result.deinit(self.alloc);
-            if (!result.success) {
-                log.warn("Pre-session hook failed with exit code {}", .{result.exit_code});
-            }
-        }
-    } else |err| {
-        log.warn("Pre-session hook error: {}", .{err});
-    }
+    self.runHook(.pre_session, session);
 
     // Mark session as running
     session.setStatus(.running);
@@ -239,16 +230,7 @@ pub fn terminateSession(self: *Orchestrator, session_id: u64) !void {
     session.setStatus(.terminating);
 
     // Run post-session hook
-    if (self.hooks.runPostSession(session)) |result_opt| {
-        if (result_opt) |*result| {
-            defer result.deinit(self.alloc);
-            if (!result.success) {
-                log.warn("Post-session hook failed with exit code {}", .{result.exit_code});
-            }
-        }
-    } else |err| {
-        log.warn("Post-session hook error: {}", .{err});
-    }
+    self.runHook(.post_session, session);
 
     // Stop monitoring
     self.monitor.unwatch(session_id);
@@ -310,6 +292,20 @@ pub fn tick(self: *Orchestrator) !void {
                 log.warn("Failed to cleanup session {x}: {}", .{ id, err });
             };
         }
+    }
+}
+
+/// Execute a hook and log any errors
+fn runHook(self: *Orchestrator, hook_type: Hooks.HookType, session: *const Session) void {
+    if (self.hooks.execute(hook_type, session)) |result_opt| {
+        if (result_opt) |*result| {
+            defer result.deinit(self.alloc);
+            if (!result.success) {
+                log.warn("{s} hook failed with exit code {}", .{ @tagName(hook_type), result.exit_code });
+            }
+        }
+    } else |err| {
+        log.warn("{s} hook error: {}", .{ @tagName(hook_type), err });
     }
 }
 

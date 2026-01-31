@@ -66,48 +66,33 @@ const error_patterns = [_][]const u8{
 
 /// Detect agent type from a command string
 pub fn detectAgentType(command: []const u8) Config.AgentType {
-    // Check for known agent commands
-    if (containsWord(command, "claude")) {
-        return .claude_code;
-    }
-    if (containsWord(command, "opencode")) {
-        return .opencode;
-    }
-    if (containsWord(command, "aider")) {
-        return .aider;
-    }
-
+    if (containsWord(command, "claude")) return .claude_code;
+    if (containsWord(command, "opencode")) return .opencode;
+    if (containsWord(command, "aider")) return .aider;
     return .custom;
+}
+
+/// Check if output contains any of the given patterns
+fn matchesAnyPattern(output: []const u8, patterns: []const []const u8) bool {
+    for (patterns) |pattern| {
+        if (std.mem.indexOf(u8, output, pattern) != null) return true;
+    }
+    return false;
 }
 
 /// Check if the output indicates the agent needs attention
 pub fn detectAttention(output: []const u8) bool {
-    for (attention_patterns) |pattern| {
-        if (std.mem.indexOf(u8, output, pattern) != null) {
-            return true;
-        }
-    }
-    return false;
+    return matchesAnyPattern(output, &attention_patterns);
 }
 
 /// Check if the output indicates completion
 pub fn detectCompletion(output: []const u8) bool {
-    for (completion_patterns) |pattern| {
-        if (std.mem.indexOf(u8, output, pattern) != null) {
-            return true;
-        }
-    }
-    return false;
+    return matchesAnyPattern(output, &completion_patterns);
 }
 
 /// Check if the output indicates an error
 pub fn detectError(output: []const u8) bool {
-    for (error_patterns) |pattern| {
-        if (std.mem.indexOf(u8, output, pattern) != null) {
-            return true;
-        }
-    }
-    return false;
+    return matchesAnyPattern(output, &error_patterns);
 }
 
 /// Analyze output and return detected status

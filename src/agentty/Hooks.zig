@@ -138,21 +138,6 @@ fn buildEnvironment(self: *const Hooks, session: *const Session) !std.process.En
     return env;
 }
 
-/// Execute pre-session hook
-pub fn runPreSession(self: *const Hooks, session: *const Session) !?Result {
-    return self.execute(.pre_session, session);
-}
-
-/// Execute post-session hook
-pub fn runPostSession(self: *const Hooks, session: *const Session) !?Result {
-    return self.execute(.post_session, session);
-}
-
-/// Execute on-attention hook
-pub fn runOnAttention(self: *const Hooks, session: *const Session) !?Result {
-    return self.execute(.on_attention, session);
-}
-
 /// Check if a hook is configured
 pub fn hasHook(self: *const Hooks, hook_type: HookType) bool {
     return self.getCommand(hook_type) != null;

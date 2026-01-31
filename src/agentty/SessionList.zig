@@ -89,44 +89,42 @@ pub fn iterator(self: *const SessionList) Iterator {
 
 /// Count sessions by status
 pub fn countByStatus(self: *const SessionList, status: Session.Status) usize {
-    var count_val: usize = 0;
+    var count: usize = 0;
     for (self.sessions.values()) |session| {
-        if (session.status == status) {
-            count_val += 1;
-        }
+        if (session.status == status) count += 1;
     }
-    return count_val;
+    return count;
+}
+
+/// Filter sessions by predicate
+fn filterSessions(
+    self: *const SessionList,
+    alloc: Allocator,
+    comptime predicate: fn (*Session) bool,
+) ![]*Session {
+    var result = std.ArrayList(*Session).init(alloc);
+    errdefer result.deinit();
+    for (self.sessions.values()) |session| {
+        if (predicate(session)) try result.append(session);
+    }
+    return result.toOwnedSlice();
 }
 
 /// Get all active sessions
 pub fn getActive(self: *const SessionList, alloc: Allocator) ![]*Session {
-    var active = std.ArrayList(*Session).init(alloc);
-    errdefer active.deinit();
-
-    for (self.sessions.values()) |session| {
-        if (session.status.isActive()) {
-            try active.append(session);
-        }
-    }
-
-    return active.toOwnedSlice();
+    return self.filterSessions(alloc, struct {
+        fn pred(s: *Session) bool { return s.status.isActive(); }
+    }.pred);
 }
 
 /// Get all sessions waiting for input
 pub fn getWaiting(self: *const SessionList, alloc: Allocator) ![]*Session {
-    var waiting = std.ArrayList(*Session).init(alloc);
-    errdefer waiting.deinit();
-
-    for (self.sessions.values()) |session| {
-        if (session.status == .waiting_input) {
-            try waiting.append(session);
-        }
-    }
-
-    return waiting.toOwnedSlice();
+    return self.filterSessions(alloc, struct {
+        fn pred(s: *Session) bool { return s.status == .waiting_input; }
+    }.pred);
 }
 
-/// Get sessions by agent type
+/// Get sessions by agent type (uses runtime value, can't use generic filter)
 pub fn getByAgentType(
     self: *const SessionList,
     alloc: Allocator,
@@ -134,13 +132,9 @@ pub fn getByAgentType(
 ) ![]*Session {
     var result = std.ArrayList(*Session).init(alloc);
     errdefer result.deinit();
-
     for (self.sessions.values()) |session| {
-        if (session.agent_type == agent_type) {
-            try result.append(session);
-        }
+        if (session.agent_type == agent_type) try result.append(session);
     }
-
     return result.toOwnedSlice();
 }
 

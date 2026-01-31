@@ -3641,6 +3641,68 @@ term: []const u8 = "xterm-ghostty",
 /// This only works on macOS since only macOS has an auto-update feature.
 @"auto-update-channel": ?build_config.ReleaseChannel = null,
 
+// ---------------------------------------------------------------------------
+// Agentty Configuration
+// ---------------------------------------------------------------------------
+// These options control the Agentty agent orchestration subsystem.
+// Agentty allows managing multiple CLI-based coding agents (Claude Code,
+// OpenCode, Aider, etc.) simultaneously with isolation and monitoring.
+
+/// Enable the Agentty agent orchestration features. When enabled, Ghostty
+/// can manage multiple coding agent sessions with git worktree isolation,
+/// status monitoring, and workflow automation.
+///
+/// This is an experimental feature and is disabled by default.
+@"agentty-enabled": bool = false,
+
+/// Base path where Agentty will create git worktrees for agent isolation.
+/// Each agent session can have its own isolated worktree, preventing
+/// conflicts between concurrent agent tasks.
+///
+/// If not set, defaults to `~/.agentty/worktrees`.
+@"agentty-worktree-base": ?[]const u8 = null,
+
+/// Automatically clean up worktrees when sessions end. If disabled,
+/// worktrees will persist and need to be manually cleaned up.
+@"agentty-auto-cleanup": bool = true,
+
+/// Enable desktop notifications for agent events. When an agent needs
+/// attention (waiting for input), completes a task, or encounters an
+/// error, a desktop notification will be sent.
+@"agentty-notification-enabled": bool = true,
+
+/// Show a status overlay on terminal surfaces when running agent sessions.
+/// The overlay displays the current session status (running, waiting, etc.).
+@"agentty-status-overlay": bool = true,
+
+/// The default agent type to use when spawning new sessions.
+/// Valid values: claude-code, opencode, aider, custom
+@"agentty-default-agent": AgenttyAgentType = .@"claude-code",
+
+/// Command to use for Claude Code agent sessions.
+@"agentty-agent-claude-code-cmd": []const u8 = "claude",
+
+/// Command to use for OpenCode agent sessions.
+@"agentty-agent-opencode-cmd": []const u8 = "opencode",
+
+/// Command to use for Aider agent sessions.
+@"agentty-agent-aider-cmd": []const u8 = "aider",
+
+/// Branch prefix for auto-generated git branches in worktrees.
+/// Branches will be named as `{prefix}/{session-id}/{task-slug}`.
+@"agentty-branch-prefix": []const u8 = "agentty",
+
+/// Shell command to run before starting an agent session.
+/// Environment variables AGENTTY_SESSION_ID, AGENTTY_WORKING_DIR, etc.
+/// are available to the hook.
+@"agentty-hook-pre-session": ?[]const u8 = null,
+
+/// Shell command to run after an agent session ends.
+@"agentty-hook-post-session": ?[]const u8 = null,
+
+/// Shell command to run when an agent needs attention (waiting for input).
+@"agentty-hook-on-attention": ?[]const u8 = null,
+
 /// This is set by the CLI parser for deinit.
 _arena: ?ArenaAllocator = null,
 
@@ -8583,6 +8645,32 @@ pub const GtkTitlebarStyle = enum(c_int) {
 
         .none => void,
     };
+};
+
+/// See agentty-default-agent
+pub const AgenttyAgentType = enum {
+    @"claude-code",
+    opencode,
+    aider,
+    custom,
+
+    pub fn displayName(self: AgenttyAgentType) []const u8 {
+        return switch (self) {
+            .@"claude-code" => "Claude Code",
+            .opencode => "OpenCode",
+            .aider => "Aider",
+            .custom => "Custom",
+        };
+    }
+
+    pub fn defaultCommand(self: AgenttyAgentType) []const u8 {
+        return switch (self) {
+            .@"claude-code" => "claude",
+            .opencode => "opencode",
+            .aider => "aider",
+            .custom => "",
+        };
+    }
 };
 
 /// See app-notifications

@@ -1,8 +1,8 @@
-# Ghostree: Agent Orchestration for Ghostty
+# Agentty: Agent Orchestration for Ghostty
 
 ## Overview
 
-This document outlines the plan to port features from [Superset](https://github.com/superset-sh/superset) to Ghostty, creating a new subsystem called **Ghostree** - a native, high-performance agent orchestration layer built on Ghostty's existing infrastructure.
+This document outlines the plan to port features from [Superset](https://github.com/superset-sh/superset) to Ghostty, creating a new subsystem called **Agentty** - a native, high-performance agent orchestration layer built on Ghostty's existing infrastructure.
 
 ### Vision
 
@@ -10,9 +10,9 @@ Transform Ghostty from a standalone terminal emulator into a powerful agent orch
 
 ---
 
-## Feature Mapping: Superset → Ghostree
+## Feature Mapping: Superset → Agentty
 
-| Superset Feature | Ghostree Implementation | Priority |
+| Superset Feature | Agentty Implementation | Priority |
 |-----------------|------------------------|----------|
 | Parallel agent execution | Multi-surface orchestration via SplitTree | P0 |
 | Git worktree isolation | Native worktree manager | P0 |
@@ -34,7 +34,7 @@ Transform Ghostty from a standalone terminal emulator into a powerful agent orch
 │                         Ghostty App                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │                     Ghostree Subsystem                       ││
+│  │                     Agentty Subsystem                        ││
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  ││
 │  │  │   Session   │  │  Worktree   │  │   Agent Monitor     │  ││
 │  │  │   Manager   │  │   Manager   │  │   (Status/Notify)   │  ││
@@ -60,7 +60,7 @@ Transform Ghostty from a standalone terminal emulator into a powerful agent orch
 
 ### Component Design
 
-#### 1. Session Manager (`src/ghostree/Session.zig`)
+#### 1. Session Manager (`src/agentty/Session.zig`)
 
 Manages agent sessions with lifecycle control.
 
@@ -96,7 +96,7 @@ pub const Session = struct {
 };
 ```
 
-#### 2. Worktree Manager (`src/ghostree/Worktree.zig`)
+#### 2. Worktree Manager (`src/agentty/Worktree.zig`)
 
 Handles git worktree creation and cleanup for agent isolation.
 
@@ -114,7 +114,7 @@ pub const Worktree = struct {
 };
 ```
 
-#### 3. Agent Monitor (`src/ghostree/Monitor.zig`)
+#### 3. Agent Monitor (`src/agentty/Monitor.zig`)
 
 Real-time monitoring and notifications.
 
@@ -129,7 +129,7 @@ pub const Monitor = struct {
 };
 ```
 
-#### 4. Orchestration Core (`src/ghostree/Orchestrator.zig`)
+#### 4. Orchestration Core (`src/agentty/Orchestrator.zig`)
 
 Central coordination for multi-agent workflows.
 
@@ -156,10 +156,10 @@ pub const Orchestrator = struct {
 
 **Goal:** Core infrastructure and basic session management
 
-#### 1.1 Create Ghostree Module Structure
+#### 1.1 Create Agentty Module Structure
 ```
-src/ghostree/
-├── ghostree.zig          # Public API and module root
+src/agentty/
+├── agentty.zig           # Public API and module root
 ├── Session.zig           # Session management
 ├── Worktree.zig          # Git worktree handling
 ├── Monitor.zig           # Status monitoring
@@ -183,7 +183,7 @@ src/ghostree/
 #### 1.4 Integration with Existing Infrastructure
 - [ ] Hook into Surface creation/destruction
 - [ ] Extend App.zig with Orchestrator instance
-- [ ] Add ghostree config options to Config.zig
+- [ ] Add agentty config options to Config.zig
 
 ### Phase 2: Git Worktree Isolation (Weeks 4-5)
 
@@ -200,7 +200,7 @@ src/ghostree/
 - [ ] Support for multiple base repositories
 
 #### 2.3 Branch Management
-- [ ] Auto-generate branch names: `ghostree/<session-id>/<task-slug>`
+- [ ] Auto-generate branch names: `agentty/<session-id>/<task-slug>`
 - [ ] Branch cleanup policies
 - [ ] Conflict detection
 
@@ -253,7 +253,7 @@ src/ghostree/
 
 #### 5.2 Configuration Format
 ```zig
-// .ghostree/config.zig or TOML
+// .agentty/config.zig or TOML
 pub const Config = struct {
     hooks: struct {
         pre_session: ?[]const u8,   // "npm install"
@@ -271,7 +271,7 @@ pub const Config = struct {
 
 #### 5.3 Environment Variables
 - [ ] Pass session metadata to hooks
-- [ ] GHOSTREE_SESSION_ID, GHOSTREE_WORKTREE_PATH, etc.
+- [ ] AGENTTY_SESSION_ID, AGENTTY_WORKTREE_PATH, etc.
 - [ ] Custom env vars from config
 
 ### Phase 6: Dashboard & UI (Weeks 12-14)
@@ -313,8 +313,8 @@ pub const Config = struct {
 
 ```
 src/
-├── ghostree/
-│   ├── ghostree.zig              # Module root, public API
+├── agentty/
+│   ├── agentty.zig               # Module root, public API
 │   ├── Session.zig               # Session management
 │   ├── SessionList.zig           # Session collection
 │   ├── Worktree.zig              # Git worktree management
@@ -334,9 +334,9 @@ src/
 ├── apprt/
 │   └── gtk/
 │       └── class/
-│           └── ghostree_dashboard.zig  # GTK dashboard widget
+│           └── agentty_dashboard.zig   # GTK dashboard widget
 └── config/
-    └── ghostree.zig              # Ghostree config options
+    └── agentty.zig               # Agentty config options
 ```
 
 ---
@@ -346,27 +346,27 @@ src/
 Add to Ghostty's existing config system:
 
 ```
-# Ghostree configuration
-ghostree-enabled = true
-ghostree-worktree-base = ~/.ghostree/worktrees
-ghostree-auto-cleanup = true
-ghostree-notification-enabled = true
-ghostree-default-agent = claude-code
+# Agentty configuration
+agentty-enabled = true
+agentty-worktree-base = ~/.agentty/worktrees
+agentty-auto-cleanup = true
+agentty-notification-enabled = true
+agentty-default-agent = claude-code
 
 # Agent-specific configs
-ghostree-agent-claude-code-cmd = claude
-ghostree-agent-opencode-cmd = opencode
-ghostree-agent-aider-cmd = aider
+agentty-agent-claude-code-cmd = claude
+agentty-agent-opencode-cmd = opencode
+agentty-agent-aider-cmd = aider
 
 # Hooks
-ghostree-hook-pre-session =
-ghostree-hook-post-session =
-ghostree-hook-on-attention =
+agentty-hook-pre-session =
+agentty-hook-post-session =
+agentty-hook-on-attention =
 
 # UI
-ghostree-status-overlay = true
-ghostree-dashboard-position = right
-ghostree-dashboard-width = 300
+agentty-status-overlay = true
+agentty-dashboard-position = right
+agentty-dashboard-width = 300
 ```
 
 ---
@@ -375,7 +375,7 @@ ghostree-dashboard-width = 300
 
 | Binding | Action |
 |---------|--------|
-| `Ctrl+Shift+G` | Toggle Ghostree dashboard |
+| `Ctrl+Shift+G` | Toggle Agentty dashboard |
 | `Ctrl+Shift+N` | New agent session |
 | `Ctrl+Shift+1-9` | Switch to session 1-9 |
 | `Ctrl+Shift+D` | Show diff for current session |
